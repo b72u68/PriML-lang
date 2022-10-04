@@ -2,7 +2,7 @@
 structure Tokens =
 struct
 
-    (* print[hello [b[world]]!] 
+    (* print[hello [b[world]]!]
 
        lexes as
 
@@ -95,6 +95,7 @@ struct
       | CAND
 
       | SPAWN
+      | CHANGE
       | SYNC
       | POLL
       | CANCEL
@@ -202,6 +203,7 @@ struct
       | eq (ORDER, ORDER) = true
       | eq (FAIRNESS, FAIRNESS) = true
       | eq (SPAWN, SPAWN) = true
+      | eq (CHANGE, CHANGE) = true
       | eq (SYNC, SYNC) = true
       | eq (POLL, POLL) = true
       | eq (CANCEL, CANCEL) = true
