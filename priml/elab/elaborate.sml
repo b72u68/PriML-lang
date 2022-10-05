@@ -117,7 +117,8 @@ struct
                                        [elabtex ctx prefix loc dom],
                                        elabtex ctx prefix loc cod)
        | E.TCmd (t, p) => TCmd (elabtex ctx prefix loc t, elabpr ctx loc p)
-       | E.TThread (t, p) => TThread (elabtex ctx prefix loc t, elabpr ctx loc p)
+       | E.TThread (t, ps) => TThread (elabtex ctx prefix loc t,
+                                       List.map (elabpr ctx loc) ps)
        | E.TForall (E.PPVar s, t) =>
          let val v = V.namedvar s
          in
@@ -705,10 +706,20 @@ struct
               (ee, tint)
           end
         | E.Spawn (p, c) =>
-          let val pp = elabpr ctx loc p
+          let
+              fun getprios_inst (i: E.inst): prio list =
+                  case i of
+                      (E.Change p, iloc) => [elabpr ctx iloc p]
+                    | (_, _) => []
+              fun getprios (E.Cmd (is, li)): prio list =
+                  case is of
+                      [] => getprios_inst li
+                    | (_, i)::rest => (getprios_inst i) @ (getprios (E.Cmd (rest, li)))
+              val pp = elabpr ctx loc p
               val (ec, t) = elabcmd ctx pp c
+              val ps = pp::(getprios c)
           in
-              (Cmd (pr, Spawn (pp, t, ec)), TThread (t, pp))
+              (Cmd (pr, Spawn (pp, t, ec)), TThread (t, ps))
           end
         | E.Change p =>
           let val pp = elabpr ctx loc p
