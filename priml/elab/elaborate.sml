@@ -708,16 +708,28 @@ struct
         | E.Spawn (p, c) =>
           let
               fun getprios_inst (i: E.inst): prio list =
-                  case i of
-                      (E.Change p, iloc) => [elabpr ctx iloc p]
-                    | (_, _) => []
-              fun getprios (E.Cmd (is, li)): prio list =
+                  let val (ii, iloc) = i
+                  in
+                  case ii of
+                      E.Change p => [elabpr ctx iloc p]
+                    | E.IDo e => getprios_exp e
+                    | E.Sync e => getprios_exp e
+                    | E.Poll e => getprios_exp e
+                    | E.Cancel e => getprios_exp e
+                    | E.IRet e => getprios_exp e
+                    | _ => []
+                  end
+              and getprios_exp (e: E.exp): prio list =
+                  case e of
+                      (E.ECmd (_, c), _) => getprios_cmd c
+                    | _ => []
+              and getprios_cmd (E.Cmd (is, li)): prio list =
                   case is of
                       [] => getprios_inst li
-                    | (_, i)::rest => (getprios_inst i) @ (getprios (E.Cmd (rest, li)))
+                    | (_, i)::rest => (getprios_inst i) @ (getprios_cmd (E.Cmd (rest, li)))
               val pp = elabpr ctx loc p
               val (ec, t) = elabcmd ctx pp c
-              val ps = pp::(getprios c)
+              val ps = pp::(getprios_cmd c)
           in
               (Cmd (pr, Spawn (pp, t, ec)), TThread (t, ps))
           end
