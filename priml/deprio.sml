@@ -56,6 +56,7 @@ and deprioi ((i, loc) : inst) : exp =
       | Spawn (p, c) => (App((App ((Var "Thread.spawn", loc),
                                   (anonfn [PWild] (deprioc c), loc), false), loc),
                             depriop loc p, false), loc)
+      | Change p => (App ((Var "Thread.change", loc), depriop loc p, false), loc)
       | Sync e => (App ((Var "Thread.sync", loc), deprioe e, false), loc)
       | Poll e => (App ((Var "Thread.poll", loc), deprioe e, false), loc)
       | Cancel e => (App ((Var "Thread.cancel", loc), deprioe e, false), loc)
