@@ -729,10 +729,10 @@ struct
         | E.Sync e =>
           let val (ee, t) = elab ctx e
               val tint = new_evar ()
-              val pint = new_pevar ()
+              val pints = []
           in
-              unify ctx loc "sync argument" t (TThread (tint, pint));
-              ((check_constraint ctx loc pr pint)
+              unify ctx loc "sync argument" t (TThread (tint, pints));
+              ((List.app (check_constraint ctx loc pr) pints)
                handle C.Context s => error loc s);
               (Cmd (pr, Sync ee), tint)
           end
