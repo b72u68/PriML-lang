@@ -25,9 +25,22 @@ struct
 
 
     datatype prio =
-      PEvar of prio ebind ref
-    | PVar of var
+      PVar of var
     | PConst of string
+
+    fun prcompare (PConst _, PVar _) = GREATER
+      | prcompare (PVar _, PConst _) = LESS
+      | prcompare (PVar v1, PVar v2) = Variable.compare (v1, v2)
+      | prcompare (PConst c1, PConst c2) = String.compare (c1, c2)
+
+    structure PrioSet = SplaySetFn (struct
+                                        type ord_key = prio
+                                        val compare = prcompare
+                                    end)
+
+    datatype prioset =
+      PSEVar of prioset ebind ref
+    | PSSet of PrioSet.set
 
     and pconstraint = PCons of prio * prio
 
@@ -67,8 +80,8 @@ struct
 
       | Arrows of (bool * typ list * typ) list
 
-      | TCmd of typ * prio
-      | TThread of typ * prio list
+      | TCmd of typ * prioset
+      | TThread of typ * prioset
       | TForall of var list * (pconstraint list) * typ
 
     (* type constructors. only used in elaboration *)
