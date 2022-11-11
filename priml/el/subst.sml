@@ -113,9 +113,7 @@ struct
 
   and prssubsp (s: prio subst) (x: prioset) : prioset =
       case x of
-           (* Assuming only perform substitution on PSEvar (ref (Bound (PSSet ws))) 
-           * because we cannot have nested PSEvar *)
-           PSEVar (ref (Bound (PSSet ws))) => PSSet (PrioSet.map (fn w => prsubsp s w) ws)
+           PSEVar (ref (Bound ws)) => prssubsp s ws
          | PSEVar _ => x
          | PSSet ps => PSSet (PrioSet.map (fn p => prsubsp s p) ps)
 
