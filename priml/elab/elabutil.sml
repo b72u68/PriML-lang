@@ -44,7 +44,7 @@ struct
       let val e = Unify.new_ebind ()
       in
         all_wevars := e :: !all_wevars;
-        IL.PEvar e
+        IL.PSEvar e
       end
 
     (* XXX5 compile flag *)
