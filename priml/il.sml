@@ -33,10 +33,8 @@ struct
       | prcompare (PVar v1, PVar v2) = Variable.compare (v1, v2)
       | prcompare (PConst c1, PConst c2) = String.compare (c1, c2)
 
-    structure PrioSet = SplaySetFn (struct
-                                        type ord_key = prio
-                                        val compare = prcompare
-                                    end)
+    structure PrioSet = SplaySetFn (type ord_key = prio
+                                    val compare = prcompare)
 
     datatype prioset =
       PSEvar of prioset ebind ref
