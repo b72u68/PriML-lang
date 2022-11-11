@@ -9,6 +9,7 @@ sig
     (* type, world, expression, declaration, and unit  to layout. *)
     val ttol : IL.typ    -> Layout.layout
     val prtol : IL.prio   -> Layout.layout
+    val prstol : IL.prioset   -> Layout.layout
     val etol : IL.exp    -> Layout.layout
     val dtol : IL.dec    -> Layout.layout
     val vtol : IL.value  -> Layout.layout

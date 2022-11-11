@@ -80,9 +80,9 @@ struct
            | TCont t => L.paren (L.seq[self t, $" cont"])
            | TRef t => L.paren (L.seq[self t, $" ref"])
            | TVar v => L.str (V.show v)
-           | TCmd (t, ps) => L.paren (L.seq[self t, $" cmd[", L.listex "" "" "," (prstol ps), $"]"])
+           | TCmd (t, ps) => L.paren (L.seq[self t, $" cmd[", (prstol ps), $"]"])
            | TThread (t, ps) =>
-               L.paren (L.seq[self t, $" thread[", L.listex "" "" "," (prstol ps), $"]"])
+               L.paren (L.seq[self t, $" thread[", (prstol ps), $"]"])
            | TForall (vs, pcons, t) =>
              L.paren (L.seq[$"forall ",
                             L.listex "" "" "" (map (op$ o V.show) vs),
@@ -138,8 +138,12 @@ struct
       | prtol (PConst s) = $s
 
     and prstol (PSEvar (ref (Bound ws))) = prstol ws
-      | prstol (PSEvar (ref (Free n))) = [$("'w" ^ itos n)]
-      | prstol (PSSet ps) = map (fn p => prtol p) (PrioSet.listItems ps)
+      | prstol (PSEvar (ref (Free n))) = $("'w" ^ itos n)
+      | prstol (PSSet ps) = 
+          let val layouts = map (fn p => prtol p) (PrioSet.listItems ps) 
+          in 
+            L.listex "" "" ","  layouts
+          end
 
     (* <t> *)
     fun bttol t = if !iltypes then L.seq[$"<", ttol t, $">"]
