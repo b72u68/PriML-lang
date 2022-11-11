@@ -113,8 +113,8 @@ struct
 
   and prssubsp (s: prio subst) (x: prioset) : prioset =
       case x of
-           PSEVar (ref (Bound ws)) => prssubsp s ws
-         | PSEVar _ => x
+           PSEvar (ref (Bound ws)) => prssubsp s ws
+         | PSEvar _ => x
          | PSSet ps => PSSet (PrioSet.map (fn p => prsubsp s p) ps)
 
   and prsubsc s (PCons (p1, p2)) = (PCons (prsubsp s p1, prsubsp s p2))

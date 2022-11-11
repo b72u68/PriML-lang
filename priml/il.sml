@@ -39,7 +39,7 @@ struct
                                     end)
 
     datatype prioset =
-      PSEVar of prioset ebind ref
+      PSEvar of prioset ebind ref
     | PSSet of PrioSet.set
 
     and pconstraint = PCons of prio * prio

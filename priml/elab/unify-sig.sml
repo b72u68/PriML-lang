@@ -7,6 +7,6 @@ sig
 
     val unify  : Context.context -> IL.typ -> IL.typ -> unit
 
-    val unifyp : Context.context -> IL.prio -> IL.prio -> unit
+    val unifyp : Context.context -> IL.prioset -> IL.prioset -> unit
 
 end
