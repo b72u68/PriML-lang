@@ -116,9 +116,19 @@ struct
        | E.TArrow (dom, cod) => Arrow (false,
                                        [elabtex ctx prefix loc dom],
                                        elabtex ctx prefix loc cod)
-       | E.TCmd (t, p) => TCmd (elabtex ctx prefix loc t, elabpr ctx loc p)
-       | E.TThread (t, ps) => TThread (elabtex ctx prefix loc t,
-                                       List.map (elabpr ctx loc) ps)
+       | E.TCmd (t, p) => 
+           let val ps = PrioSet.singleton (elabpr ctx loc p) 
+           in
+             TCmd (elabtex ctx prefix loc t, PSSet ps)
+           end
+       | E.TThread (t, ps) => 
+           let val ips = E.PrioSet.foldl 
+                          (fn (p, ips) => PrioSet.add (ips, (elabpr ctx loc p))) 
+                          (PrioSet.empty)
+                          ps
+           in
+             TThread (elabtex ctx prefix loc t, PSSet ips)
+           end
        | E.TForall (E.PPVar s, t) =>
          let val v = V.namedvar s
          in
@@ -636,7 +646,7 @@ struct
           let val pp = elabpr ctx loc p
               val (ec, t) = elabcmd ctx pp c
           in
-              (Cmd (pp, ec), TCmd (t, pp))
+              (Cmd (pp, ec), TCmd (t, PSSet (PrioSet.singleton pp)))
           end
 
         | E.PFn (pps, ps, e) => raise (Elaborate "Pfn unimplemented")
@@ -660,7 +670,7 @@ struct
               (* val _ = print "elaborating p\n" *)
               val pp = elabpr ctx loc p
               (* val _ = print "done\n" *)
-              val priov = new_pevar ()
+              val priov = new_psevar ()
           in
               (* XXX4 is this casing thing OK? *)
               case t of
@@ -699,39 +709,39 @@ struct
           E.IDo e =>
           let val (ee, t) = elab ctx e
               val tint = new_evar ()
-              val pint = new_pevar ()
+              val psint = new_psevar ()
           in
-              unify ctx loc "binding" t (TCmd (tint, pint));
-              unifyp ctx loc "priority of binding" pint pr;
+              unify ctx loc "binding" t (TCmd (tint, psint));
+              unifyp ctx loc "priority of binding" psint (PSSet (PrioSet.singleton pr));
               (ee, tint)
           end
         | E.Spawn (p, c) =>
           let
-              fun getprios_inst (i: E.inst): prio list =
+              fun getprios_inst (i: E.inst): PrioSet.set =
                   let val (ii, iloc) = i
                   in
                   case ii of
-                      E.Change p => [elabpr ctx iloc p]
+                      E.Change p => PrioSet.singleton (elabpr ctx iloc p)
                     | E.IDo e => getprios_exp e
                     | E.Sync e => getprios_exp e
                     | E.Poll e => getprios_exp e
                     | E.Cancel e => getprios_exp e
                     | E.IRet e => getprios_exp e
-                    | _ => []
+                    | _ => PrioSet.empty
                   end
-              and getprios_exp (e: E.exp): prio list =
+              and getprios_exp (e: E.exp): PrioSet.set =
                   case e of
                       (E.ECmd (_, c), _) => getprios_cmd c
-                    | _ => []
-              and getprios_cmd (E.Cmd (is, li)): prio list =
+                    | _ => PrioSet.empty
+              and getprios_cmd (E.Cmd (is, li)): PrioSet.set =
                   case is of
                       [] => getprios_inst li
-                    | (_, i)::rest => (getprios_inst i) @ (getprios_cmd (E.Cmd (rest, li)))
+                    | (_, i)::rest => PrioSet.union (getprios_inst i, getprios_cmd (E.Cmd (rest, li)))
               val pp = elabpr ctx loc p
               val (ec, t) = elabcmd ctx pp c
-              val ps = pp::(getprios_cmd c)
+              val ps = PrioSet.add (getprios_cmd c, pp)
           in
-              (Cmd (pr, Spawn (pp, t, ec)), TThread (t, ps))
+              (Cmd (pr, Spawn (pp, t, ec)), TThread (t, PSSet ps))
           end
         | E.Change p =>
           let val pp = elabpr ctx loc p
@@ -741,18 +751,18 @@ struct
         | E.Sync e =>
           let val (ee, t) = elab ctx e
               val tint = new_evar ()
-              val pints = []
+              val psint = new_psevar ()
           in
-              unify ctx loc "sync argument" t (TThread (tint, pints));
-              ((List.app (check_constraint ctx loc pr) pints)
+              unify ctx loc "sync argument" t (TThread (tint, psint));
+              ((check_constraint ctx loc pr)
                handle C.Context s => error loc s);
               (Cmd (pr, Sync ee), tint)
           end
         | E.Poll e =>
           let val (ee, t) = elab ctx e
               val tint = new_evar ()
-              val pint = new_pevar ()
-              val _ = unify ctx loc "poll argument" t (TThread (tint, pint))
+              val psint = new_psevar ()
+              val _ = unify ctx loc "poll argument" t (TThread (tint, psint))
               val t = ((case C.con ctx "option" of
                             (kind, Lambda f, _) =>
                             if kind = 1
@@ -767,9 +777,9 @@ struct
         | E.Cancel e =>
           let val (ee, t) = elab ctx e
               val tint = new_evar ()
-              val pint = new_pevar ()
+              val psint = new_psevar ()
           in
-              unify ctx loc "cancel argument" t (TThread (tint, pint));
+              unify ctx loc "cancel argument" t (TThread (tint, psint));
               (Cmd (pr, Cancel ee), TRec [])
           end
         | E.IRet e =>

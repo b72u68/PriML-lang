@@ -25,9 +25,9 @@ struct
            | (Evar (r' as ref (Free _))) => r = r'
            | _ => false)
 
-    fun same_wevar r x =
+    fun same_wsevar r x =
         (case x of
-             (PSEvar (ref (Bound t))) => same_wevar r t
+             (PSEvar (ref (Bound t))) => same_wsevar r t
            | (PSEvar (r' as ref (Free _))) => r = r'
            | _ => false)
 
@@ -254,12 +254,12 @@ struct
         (PSEvar (ref (Bound w1)), w2) => unifypex ctx eqmap w1 w2
       | (w1, PSEvar (ref (Bound w2))) => unifypex ctx eqmap w1 w2
       | (PSEvar (r as ref (Free _)), w2) =>
-          if same_wevar r w2 then ()
+          if same_wsevar r w2 then ()
           else if woccursw r w2
                then raise Unify "circularity"
                else wset r w2
       | (w1, PSEvar (r as ref (Free _))) =>
-          if same_wevar r w1 then ()
+          if same_wsevar r w1 then ()
           else if woccursw r w1
                then raise Unify "circularity"
                else wset r w1

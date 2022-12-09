@@ -80,8 +80,8 @@ struct
 
     | prsubst s (TTag (t, v)) = TTag (prsubst s t, v)
 
-    | prsubst s (TCmd (t, ps)) = TCmd (prsubst s t, prssubsp s ps)
-    | prsubst s (TThread (t, ps)) = TThread (prsubst s t, prssubsp s ps)
+    | prsubst s (TCmd (t, ps)) = TCmd (prsubst s t, prsubspset s ps)
+    | prsubst s (TThread (t, ps)) = TThread (prsubst s t, prsubspset s ps)
     | prsubst s (TForall (wvs, cs, t)) =
       let val nvs = List.map Variable.alphavary wvs
           val t' = prsubst (fromlist (ListPair.zip (wvs, List.map PVar nvs))) t
@@ -109,11 +109,13 @@ struct
           case VM.find (s, v) of
                SOME ww => ww
              | NONE => x)
+        | PEvar (ref (Bound w)) => prsubsp (s: prio subst) w
+        | PEvar _ => x
         | PConst _ => x
 
-  and prssubsp (s: prio subst) (x: prioset) : prioset =
+  and prsubspset (s: prio subst) (x: prioset) : prioset =
       case x of
-           PSEvar (ref (Bound ws)) => prssubsp s ws
+           PSEvar (ref (Bound ws)) => prsubspset s ws
          | PSEvar _ => x
          | PSSet ps => PSSet (PrioSet.map (fn p => prsubsp s p) ps)
 

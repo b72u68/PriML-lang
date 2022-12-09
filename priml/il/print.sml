@@ -134,7 +134,9 @@ struct
            | Evar (ref (Free n)) => $("'a" ^ itos n))
       end
 
-    and prtol (PVar v) = $(V.show v)
+    and prtol (PEvar (ref (Bound w))) = prtol w
+      | prtol (PEvar (ref (Free n))) = $("'w" ^ itos n)
+      | prtol (PVar v) = $(V.show v)
       | prtol (PConst s) = $s
 
     and prstol (PSEvar (ref (Bound ws))) = prstol ws

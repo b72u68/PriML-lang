@@ -20,8 +20,10 @@ struct
 
     val all_evars  = ref (nil : IL.typ IL.ebind ref list)
     val all_wevars = ref (nil : IL.prio IL.ebind ref list)
+    val all_wsevars = ref (nil : IL.prioset IL.ebind ref list)
     fun clear_evars () = (all_evars  := nil;
-                          all_wevars := nil)
+                          all_wevars := nil;
+                          all_wsevars := nil)
     fun finalize_evars () =
       let in
         app (fn r =>
@@ -31,7 +33,11 @@ struct
         app (fn r =>
              case !r of
                IL.Bound _ => ()
-             | IL.Free _ => r := IL.Bound Initial.bot) (!all_wevars)
+             | IL.Free _ => r := IL.Bound Initial.bot) (!all_wevars);
+        app (fn r =>
+             case !r of 
+               IL.Bound _ => ()
+             | IL.Free _ => r := IL.Bound (IL.PSSet (IL.PrioSet.singleton (Initial.bot)))) (!all_wsevars)
       end
 
     fun new_evar ()  = 
@@ -44,6 +50,13 @@ struct
       let val e = Unify.new_ebind ()
       in
         all_wevars := e :: !all_wevars;
+        IL.PEvar e
+      end
+    (* TODO: check the supporting functions for world set evar *)
+    fun new_psevar () =
+      let val e = Unify.new_ebind ()
+      in
+        all_wsevars := e :: !all_wsevars;
         IL.PSEvar e
       end
 
@@ -89,8 +102,8 @@ struct
                     (Layout.align
                      [%[$("World mismatch (" ^ s ^ ") at "), $(Pos.toString loc),
                         $": ", $msg],
-                      %[$"expected:", Layout.indent 4 (ILPrint.prtol w2)],
-                      %[$"actual:  ", Layout.indent 4 (ILPrint.prtol w1)]],
+                      %[$"expected:", Layout.indent 4 (ILPrint.prstol w2)],
+                      %[$"actual:  ", Layout.indent 4 (ILPrint.prstol w1)]],
                      print);
                     print "\n";
                     raise Elaborate "type error"
@@ -251,6 +264,7 @@ struct
            NONE
          end
 
+    (* assign Evar and PEvar to polymorphic types and priorities *)
     fun evarizes (IL.Poly({prios, tys}, mt)) =
         let
           (* make the type and world substitutions *)
@@ -404,3 +418,4 @@ struct
 *)
 
 end
+

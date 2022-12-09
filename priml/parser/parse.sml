@@ -202,8 +202,8 @@ struct
                $mostatomic && (`CMD >> `LSQUARE >> ($prio) << `RSQUARE)
                 wth TCmd,
 
-               $mostatomic && (`THREAD >> `LSQUARE >> separate ($prio) (`COMMA) << `RSQUARE)
-                wth TThread,
+               $mostatomic && (`THREAD >> `LSQUARE >> ($prio) << `RSQUARE)
+                wth (fn (t, p) => TThread (t, PrioSet.singleton p)),
 
                (* also includes mostatomic, not applied to anything *)
                $mostatomic -- postfixapps]
